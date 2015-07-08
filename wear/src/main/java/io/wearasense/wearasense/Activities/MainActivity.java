@@ -26,13 +26,14 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import io.wearasense.wearasense.R;
 import io.wearasense.wearasense.Receivers.TimeBroadCastReceiver;
-import io.wearasense.wearasense.Utils.VibrationManager;
 
 public class MainActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener, SensorEventListener {
@@ -60,6 +61,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     private double azimutDegrees;
 
     public enum TYPE_OF_MESSAGE {POI, TIME, NORTH}
+
     private Handler mHandler;
 
     @Override
@@ -70,12 +72,12 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         //        WindowManager.LayoutParams WMLP = getWindow().getAttributes();
         //        WMLP.screenBrightness = 0F;
 
-        alarmMgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
+        alarmMgr = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
         alarmIntent = new Intent(MainActivity.this, TimeBroadCastReceiver.class);
         alarmPendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, alarmIntent, 0);
 
         vibration = (Vibrator) this.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
@@ -145,7 +147,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
     }
 
 
-
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.d(TAG, "connection failed");
@@ -159,9 +160,11 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 // DataItem changed
                 final DataItem item = event.getDataItem();
-                switch(item.getUri().getPath()){
+                switch (item.getUri().getPath()) {
                     case POI_PATH:
                         msg.what = TYPE_OF_MESSAGE.POI.ordinal();
+                        float latitude = DataMapItem.fromDataItem(item).getDataMap().getFloat(LATITUDE);
+                        float longitude = DataMapItem.fromDataItem(item).getDataMap().getFloat(LONGITUDE);
                         mHandler.sendMessage(msg);
                         break;
                     case TIME_PATH:
@@ -189,11 +192,13 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
         }
     }
 
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
 
 
     float[] mGravity;
     float[] mGeomagnetic;
+
     public void onSensorChanged(SensorEvent event) {
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -210,7 +215,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 azimut = orientation[0]; // orientation contains: azimut, pitch and roll
 //                Log.d(TAG, "orientation " + Math.toDegrees(azimut));
                 azimutDegrees = Math.toDegrees(azimut);
-                if(azimutDegrees > -93 && azimutDegrees < -87){
+                if (azimutDegrees > -93 && azimutDegrees < -87) {
                     vibration.vibrate(100);
                 }
             } else {

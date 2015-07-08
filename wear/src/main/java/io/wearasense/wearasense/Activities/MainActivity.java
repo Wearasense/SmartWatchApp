@@ -208,9 +208,11 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
                 azimut = orientation[0]; // orientation contains: azimut, pitch and roll
-                Log.d(TAG, "orientation " + Math.toDegrees(azimut));
+//                Log.d(TAG, "orientation " + Math.toDegrees(azimut));
                 azimutDegrees = Math.toDegrees(azimut);
-                vibration.vibrate(VibrationManager.getPattern(azimutDegrees), -1);
+                if(azimutDegrees > -93 && azimutDegrees < -87){
+                    vibration.vibrate(100);
+                }
             } else {
                 Log.d(TAG, "unsuccessfull getting rotation matrix");
             }
